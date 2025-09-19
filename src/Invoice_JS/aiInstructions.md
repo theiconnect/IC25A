@@ -19,3 +19,4 @@ Repository/Repo - Root folder
 clone - very first operation =>to fetch/map online git into local git
 change - modified file/pending change 
 stage - to pick selected files to commit
+commit -> Save/Move the file into Local GIT Repo
