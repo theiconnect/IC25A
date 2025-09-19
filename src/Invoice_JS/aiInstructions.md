@@ -32,4 +32,4 @@ each commit will have its own unique number.
 
 pull => Get the latest commits from origin branch to local branch.
 push => Send the latest commits from local branch to origin branch.
-
+ sync => pull and push
