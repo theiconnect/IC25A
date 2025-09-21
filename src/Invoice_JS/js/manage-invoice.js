@@ -54,7 +54,9 @@ function initializeForm() {
     let dutyEl = document.getElementById("Duty");
     let countryEl = document.getElementById("CountryOfRegion");
     let totalPriceEl = document.getElementById("TotalPrice");
-    let saveButtonEl = document.getElementById('SaveForm')
+    let saveButtonEl = document.getElementById('SaveForm');
+    let manufacturingDateEl = document.getElementById('ManufacturingDate');
+    let expiryDateEl = document.getElementById('ExpiryDate');
 
     priceEl.addEventListener("keydown", allowOnlyDecimalNumbers);
     dutyEl.addEventListener("keydown", allowOnlyDecimalNumbers);
@@ -64,10 +66,25 @@ function initializeForm() {
     priceEl.addEventListener("change", calculateTotalPrice);
     dutyEl.addEventListener("change", calculateTotalPrice);
     countryEl.addEventListener("change", calculateTotalPrice);
-
     saveButtonEl.addEventListener('click', saveInvoice);
 
+    //Manufacturing date - max attribute - currentdate
+    // allowed formats'yyyy-mm-dd' 'mm-dd-yyyy'
     totalPriceEl.setAttribute("readonly", "readonly");
+
+    let currentDate = new Date();
+    let currentDateStr = (new Date().getFullYear()).toString() +
+                          '-' + 
+                          (new Date().getMonth() + 1).toString().padStart(2, '0') +
+                          '-' +
+                          (new Date().getDate().toString().padStart(2, '0'));
+
+    manufacturingDateEl.setAttribute('max', currentDateStr);
+    expiryDateEl.setAttribute('min', currentDateStr);
+
+    manufacturingDateEl.addEventListener('blur', restrictManufacturingDate);
+    expiryDateEl.addEventListener('blur', restrictExpiryDate);
+
   }
 
   function allowOnlyDecimalNumbers(evt) {
@@ -131,8 +148,40 @@ function initializeForm() {
       invoiceName: '',
       manufacturingDate : '',
       expiryDate : '',
-      
+
     }
 
+  }
+
+  function restrictManufacturingDate(event){
+    let manufacturingDateEl = document.getElementById('ManufacturingDate');
+    //'22-09-2025' = ['2','2','-', '0','9','-','2','0','2','5']
+    let arrDate = manufacturingDateEl.value.split('-');
+    //'2025-09-22' => ['2025', '09', '22']
+    let mfgDateObj = new Date(
+        arrDate[0] + '-' + arrDate[1] + '-' + arrDate[2]
+    ); 
+
+    if(new Date() < mfgDateObj){
+      manufacturingDateEl.value = '';
+      alert('Manufacturing date should not be the future date')
+    }
+
+
+  }
+
+  function restrictExpiryDate(event){
+    let expiryDateEl = document.getElementById('ExpiryDate');
+    //'22-09-2025' = ['2','2','-', '0','9','-','2','0','2','5']
+    let arrDate = expiryDateEl.value.split('-');
+    //'2025-09-22' => ['2025', '09', '22']
+    let expDateObj = new Date(
+        arrDate[0] + '-' + arrDate[1] + '-' + arrDate[2]
+    ); 
+
+    if(new Date() > expDateObj){
+      expiryDateEl.value = '';
+      alert('Product is expired and cannot be sold!!!\n Expiry date should be future date only.')
+    }
   }
 }
