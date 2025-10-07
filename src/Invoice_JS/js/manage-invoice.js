@@ -18,16 +18,14 @@ function initializeForm() {
   //5.bindEvents to text boxes like price, duty should allow only numbers
   bindEvents();
 
-  //6. Register save button click
-  saveInvoice();
 
   //7. Goback button click
 
   function generateNewInvoiceCode() {
-    //TODO: Logic to generate new invoice code
     var invoicesJson = localStorage.getItem("invoices");
+    if (!invoicesJson) return "INV-001";
+
     var arrInvoices = JSON.parse(invoicesJson);
-    if (arrInvoices.length == 0) return "INV-001";
     let max = 0;
     arrInvoices.forEach((i) => {
       if (max < parseInt(i.Code.replace("INV-", ""))) {
@@ -76,7 +74,8 @@ function initializeForm() {
         this.classList.remove("is-valid");
         this.classList.remove("is-invalid");
       });
-      obj.addEventListener("change", function () {
+      obj.addEventListener("blur", function () {
+        console.log('hi')
         if (this.value.length > 0) {
           this.classList.add("is-valid");
           this.classList.remove("is-invalid");
@@ -85,7 +84,8 @@ function initializeForm() {
           this.classList.remove("is-valid");
         }
       });
-    });
+    }); 
+   
 
     priceEl.addEventListener("keydown", allowOnlyDecimalNumbers);
     dutyEl.addEventListener("keydown", allowOnlyDecimalNumbers);
@@ -118,6 +118,7 @@ function initializeForm() {
     document
       .getElementById("Description")
       .addEventListener("input", restrictTheDescriptionLength);
+   
   }
 
   function allowOnlyDecimalNumbers(evt) {
@@ -191,6 +192,7 @@ function initializeForm() {
     var invoiceCode = document.getElementById("InvoiceCode").value;
     var invoiceName = document.getElementById("InvoiceName").value;
     var country = document.getElementById("CountryOfRegion").value;
+    var countryDisplayName = document.getElementById("CountryOfRegion").selectedOptions[0].text;
     let manufacturingDate = document.getElementById("ManufacturingDate").value;
     let expiryDate = document.getElementById("ExpiryDate").value;
     let price = document.getElementById("Price").value;
@@ -248,14 +250,19 @@ function initializeForm() {
 
     if (isValidForm == false) {
       return;
-    }
+    }    
+
     console.log("validation -End");
+
+    if(!confirm('Are you sure you want to save invoice data?'))
+      return;
 
     console.log("Object Prep -Start");
     var invoiceObj = {
       Code: invoiceCode,
       Name: invoiceName,
       country: country,
+      countryDisplayName: countryDisplayName,
       mfgDate: manufacturingDate,
       expDate: expiryDate,
       price: price,
