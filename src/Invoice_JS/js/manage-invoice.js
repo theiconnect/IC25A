@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", initializeForm);
 
 function initializeForm() {
   // Initialize form elements or event listeners here if needed
-  console.log("Form Initialized");
+  console.log("Form Initialized - and our program execution started.");
 
   //1. Get and set a new Invoice Code to the InvoiceCode input field
   var newInvoiceCode = generateNewInvoiceCode();
@@ -25,7 +25,18 @@ function initializeForm() {
 
   function generateNewInvoiceCode() {
     //TODO: Logic to generate new invoice code
-    return "INV-001";
+    var invoicesJson = localStorage.getItem("invoices");
+    var arrInvoices = JSON.parse(invoicesJson);
+    if (arrInvoices.length == 0) return "INV-001";
+    let max = 0;
+    arrInvoices.forEach((i) => {
+      if (max < parseInt(i.Code.replace("INV-", ""))) {
+        max = parseInt(i.Code.replace("INV-", ""));
+      }
+    });
+
+    return 'INV-' +  ((max+1).toString().padStart(3, '0'));
+
   }
 
   function storeCountriesInLocalStorage() {
@@ -54,9 +65,27 @@ function initializeForm() {
     let dutyEl = document.getElementById("Duty");
     let countryEl = document.getElementById("CountryOfRegion");
     let totalPriceEl = document.getElementById("TotalPrice");
-    let saveButtonEl = document.getElementById('SaveForm');
-    let manufacturingDateEl = document.getElementById('ManufacturingDate');
-    let expiryDateEl = document.getElementById('ExpiryDate');
+    let saveButtonEl = document.getElementById("SaveForm");
+    let manufacturingDateEl = document.getElementById("ManufacturingDate");
+    let expiryDateEl = document.getElementById("ExpiryDate");
+    let allMandatoryFields = document.querySelectorAll(
+      "#InvoiceName, #CountryOfRegion, #ManufacturingDate, #ExpiryDate, #Price, #Duty"
+    );
+    allMandatoryFields.forEach((obj) => {
+      obj.addEventListener("focusin", function () {
+        this.classList.remove("is-valid");
+        this.classList.remove("is-invalid");
+      });
+      obj.addEventListener("change", function () {
+        if (this.value.length > 0) {
+          this.classList.add("is-valid");
+          this.classList.remove("is-invalid");
+        } else {
+          this.classList.add("is-invalid");
+          this.classList.remove("is-valid");
+        }
+      });
+    });
 
     priceEl.addEventListener("keydown", allowOnlyDecimalNumbers);
     dutyEl.addEventListener("keydown", allowOnlyDecimalNumbers);
@@ -66,25 +95,29 @@ function initializeForm() {
     priceEl.addEventListener("change", calculateTotalPrice);
     dutyEl.addEventListener("change", calculateTotalPrice);
     countryEl.addEventListener("change", calculateTotalPrice);
-    saveButtonEl.addEventListener('click', saveInvoice);
+    saveButtonEl.addEventListener("click", saveInvoice);
 
     //Manufacturing date - max attribute - currentdate
     // allowed formats'yyyy-mm-dd' 'mm-dd-yyyy'
     totalPriceEl.setAttribute("readonly", "readonly");
 
     let currentDate = new Date();
-    let currentDateStr = (new Date().getFullYear()).toString() +
-                          '-' + 
-                          (new Date().getMonth() + 1).toString().padStart(2, '0') +
-                          '-' +
-                          (new Date().getDate().toString().padStart(2, '0'));
+    let currentDateStr =
+      new Date().getFullYear().toString() +
+      "-" +
+      (new Date().getMonth() + 1).toString().padStart(2, "0") +
+      "-" +
+      new Date().getDate().toString().padStart(2, "0");
 
-    manufacturingDateEl.setAttribute('max', currentDateStr);
-    expiryDateEl.setAttribute('min', currentDateStr);
+    manufacturingDateEl.setAttribute("max", currentDateStr);
+    expiryDateEl.setAttribute("min", currentDateStr);
 
-    manufacturingDateEl.addEventListener('blur', restrictManufacturingDate);
-    expiryDateEl.addEventListener('blur', restrictExpiryDate);
+    manufacturingDateEl.addEventListener("blur", restrictManufacturingDate);
+    expiryDateEl.addEventListener("blur", restrictExpiryDate);
 
+    document
+      .getElementById("Description")
+      .addEventListener("input", restrictTheDescriptionLength);
   }
 
   function allowOnlyDecimalNumbers(evt) {
@@ -139,49 +172,135 @@ function initializeForm() {
     let priceValue = Number(priceEl.value);
     let dutyValue = Number(dutyEl.value);
 
-    totalPriceEl.value = isNaN(priceValue + dutyValue) ? 0 : (priceValue + dutyValue).toFixed(2);
+    totalPriceEl.value = isNaN(priceValue + dutyValue)
+      ? 0
+      : (priceValue + dutyValue).toFixed(2);
   }
 
-  function saveInvoice(){
+  function saveInvoice() {
+    /*
+    getallcontrolvalues
+    validate those values
+    if everything looks good then i need to save the invoice 
+    details into the LS
+    else 
+      we need to show some kind of error msg / alert / error - indication to the user
+      and don't save it into LS/DB
+      */
+    console.log("getallcontrolvalues -Start");
+    var invoiceCode = document.getElementById("InvoiceCode").value;
+    var invoiceName = document.getElementById("InvoiceName").value;
+    var country = document.getElementById("CountryOfRegion").value;
+    let manufacturingDate = document.getElementById("ManufacturingDate").value;
+    let expiryDate = document.getElementById("ExpiryDate").value;
+    let price = document.getElementById("Price").value;
+    let duty = document.getElementById("Duty").value;
+    let description = document.getElementById("Description").value;
+    console.log("getallcontrolvalues -End");
+
+    console.log("validation -Start");
+    let isValidForm = true;
+    if (invoiceName.length == 0) {
+      //alert('Please provide inovoice name');
+      document.getElementById("InvoiceName").classList.add("is-invalid");
+      isValidForm = false;
+      //return;
+    } else {
+      document.getElementById("InvoiceName").classList.add("is-valid");
+    }
+    if (country.length == 0) {
+      document.getElementById("CountryOfRegion").classList.add("is-invalid");
+      isValidForm = false;
+      //return;
+    } else {
+      document.getElementById("CountryOfRegion").classList.add("is-valid");
+    }
+    if (manufacturingDate.length == 0) {
+      document.getElementById("ManufacturingDate").classList.add("is-invalid");
+      isValidForm = false;
+      //return;
+    } else {
+      document.getElementById("ManufacturingDate").classList.add("is-valid");
+    }
+    if (expiryDate.length == 0) {
+      document.getElementById("ExpiryDate").classList.add("is-invalid");
+      isValidForm = false;
+      //return;
+    } else {
+      document.getElementById("ExpiryDate").classList.add("is-valid");
+    }
+    if (price.length == 0) {
+      document.getElementById("Price").classList.add("is-invalid");
+      isValidForm = false;
+      //return;
+    } else {
+      document.getElementById("Price").classList.add("is-valid");
+    }
+    if (country != 1) {
+      if (duty.length == 0) {
+        document.getElementById("Duty").classList.add("is-invalid");
+        isValidForm = false;
+        //return;
+      } else {
+        document.getElementById("Duty").classList.add("is-valid");
+      }
+    }
+
+    if (isValidForm == false) {
+      return;
+    }
+    console.log("validation -End");
+
+    console.log("Object Prep -Start");
     var invoiceObj = {
-      invoiceCode:document.getElementById('InvoiceCode').value,
-      invoiceName: '',
-      manufacturingDate : '',
-      expiryDate : '',
-
-    }
-
+      Code: invoiceCode,
+      Name: invoiceName,
+      country: country,
+      mfgDate: manufacturingDate,
+      expDate: expiryDate,
+      price: price,
+      duty: duty,
+      desc: description,
+    };
+    console.log("Object Prep -End; invoiceObj:" + JSON.stringify(invoiceObj));
+    var invoicesJson = localStorage.getItem("invoices");
+    var arrInvoices = JSON.parse(invoicesJson);
+    arrInvoices.push(invoiceObj);
+    localStorage.setItem("invoices", JSON.stringify(arrInvoices));
+    location.href = "InvoiceList.html";
+    //debugger;
   }
 
-  function restrictManufacturingDate(event){
-    let manufacturingDateEl = document.getElementById('ManufacturingDate');
+  function restrictManufacturingDate(event) {
+    let manufacturingDateEl = document.getElementById("ManufacturingDate");
     //'22-09-2025' = ['2','2','-', '0','9','-','2','0','2','5']
-    let arrDate = manufacturingDateEl.value.split('-');
+    let arrDate = manufacturingDateEl.value.split("-");
     //'2025-09-22' => ['2025', '09', '22']
-    let mfgDateObj = new Date(
-        arrDate[0] + '-' + arrDate[1] + '-' + arrDate[2]
-    ); 
+    let mfgDateObj = new Date(arrDate[0] + "-" + arrDate[1] + "-" + arrDate[2]);
 
-    if(new Date() < mfgDateObj){
-      manufacturingDateEl.value = '';
-      alert('Manufacturing date should not be the future date')
+    if (new Date() < mfgDateObj) {
+      manufacturingDateEl.value = "";
+      alert("Manufacturing date should not be the future date");
     }
-
-
   }
 
-  function restrictExpiryDate(event){
-    let expiryDateEl = document.getElementById('ExpiryDate');
+  function restrictExpiryDate(event) {
+    let expiryDateEl = document.getElementById("ExpiryDate");
     //'22-09-2025' = ['2','2','-', '0','9','-','2','0','2','5']
-    let arrDate = expiryDateEl.value.split('-');
+    let arrDate = expiryDateEl.value.split("-");
     //'2025-09-22' => ['2025', '09', '22']
-    let expDateObj = new Date(
-        arrDate[0] + '-' + arrDate[1] + '-' + arrDate[2]
-    ); 
+    let expDateObj = new Date(arrDate[0] + "-" + arrDate[1] + "-" + arrDate[2]);
 
-    if(new Date() > expDateObj){
-      expiryDateEl.value = '';
-      alert('Product is expired and cannot be sold!!!\n Expiry date should be future date only.')
+    if (new Date() > expDateObj) {
+      expiryDateEl.value = "";
+      alert(
+        "Product is expired and cannot be sold!!!\n Expiry date should be future date only."
+      );
     }
+  }
+
+  function restrictTheDescriptionLength(evt) {
+    debugger;
+    document.getElementById("noOfChars").innerText = this.value.length;
   }
 }
